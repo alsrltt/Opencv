@@ -1,25 +1,72 @@
-
-#include <opencv2/core.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
 #include <iostream>
-#include <stdio.h> 
-
-using namespace cv;
+#include <opencv2/opencv.hpp>
 using namespace std;
+using namespace cv;
+/*
+Range th(50, 100);
+Mat hue, HSV;
 
-int main(int argc, char** argv)
-{
-	Mat m1(2, 3, CV_8U<2);
-	Mat m2(2, 3, CV_8U, Scalar(10));
-	Mat m3 = m1 + m2;
-	Mat m4 = m2 - 6;
-	Mat m5 = m1;
-	cout << "m1 = " << m1 << endl;
-	cout << "m2 = " << m2 << endl;
-	cout << "m3 = " << m3 << endl;
-	cout << "m4 = " << m4 << endl;
-	cout << "m5 = " << m5 << endl;
+void onThreshold(int value, void* userdata) {
+	Mat result = Mat(hue.size(), CV_8U, Scalar(0));
+	for (int i = 0;i < result.rows;i++) {
+		for (int j = 0;j < result.cols;j++) {
+			bool ck = hue.at<uchar>(i, j) >= th.start&&hue.at<uchar>(i, j) = (ck) ? 255 : 0;
+		}
+	}
+	imshow("result", result); 
+}
 
-	waitKey();
+void onMouse(int event, int x, int y, int flags, void *param) {
+	switch (event) {
+	case EVENT_LBUTTONDOWN:
+		cout << HSV.at<Vec3d>(y, x) << endl;
+	}
+}
+*/
+
+void filter1(Mat img, Mat& dst, Mat mask) {
+	dst = Mat(img.size(), CV_32F, Scalar(0));
+	Point h_m = mask.size() / 2;
+	for (int i = h_m.y;i < img.rows - h_m.x;i++) {
+		for (int j = h_m.x;j < img.cols - h_m.x;j++) {
+			float sum = 0;
+			for (int u = 0;u < mask.rows;u++) {
+				for (int v = 0;v < mask.cols;v++) {
+					int y = i + u - h_m.y;
+					int x = j + v - h_m.x;
+					sum += mask.at<float>(u, v)*img.at<uchar>(y, x);
+				}
+			}
+			dst.at<float>(i, j) = sum;
+		}
+	}
+}
+
+int main() {
+	/*Mat bgr_img = imread("./image/money.jpg", 1);
+	CV_Assert(bgr_img.data);
+	Mat hsv[3];
+	cvtColor(bgr_img, HSV, CV_BGR2HSV);
+	split(HSV, hsv); 
+	hsv[0].copyTo(hue);
+	namedWindow("result", WINDOW_AUTOSIZE);
+	createTrackbar("hue_th1", "result", &th.start, 255, onThreshold);
+	createTrackbar("hue_th2", "result", &th.end, 255, onThreshold);
+	waitKey();*/
+
+	Mat image = imread("./image/money.jpg", IMREAD_GRAYSCALE);
+	CV_Assert(image.data);
+	float data[] = {
+		1 / 9.f, 1 / 9.f, 1 / 9.f,
+		1 / 9.f, 1 / 9.f, 1 / 9.f
+		, 1 / 9.f, 1 / 9.f, 1 / 9.f
+	};
+	Mat mask(3, 3, CV_32F, data);
+	Mat blur;
+	filter1(image, blur, mask);
+	blur.convertTo(blur, CV_8U);
+	imshow("image", image);
+	imshow("blur", blur);
+	waitKey(0);
+	return 0;
 }

@@ -19,7 +19,4 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <Xml Include="test.xml" />
-  </ItemGroup>
 </Project>
