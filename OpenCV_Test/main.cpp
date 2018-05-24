@@ -1,7 +1,9 @@
-#include <iostream>
+/*#include <iostream>
 #include <opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
+string title = "blur";
+Mat image;
 /*
 Range th(50, 100);
 Mat hue, HSV;
@@ -22,8 +24,7 @@ void onMouse(int event, int x, int y, int flags, void *param) {
 		cout << HSV.at<Vec3d>(y, x) << endl;
 	}
 }
-*/
-
+*//*
 void filter1(Mat img, Mat& dst, Mat mask) {
 	dst = Mat(img.size(), CV_32F, Scalar(0));
 	Point h_m = mask.size() / 2;
@@ -41,6 +42,31 @@ void filter1(Mat img, Mat& dst, Mat mask) {
 		}
 	}
 }
+*//*
+void onMouse(int event, int x, int y, int flags, void *param) {
+	static Point pt(-1, -1);
+	if (event == EVENT_LBUTTONDOWN) {
+		if (pt.x < 0)pt = Point(x, y);
+		else {
+			Mat blur;
+			cout << "blurring" << endl;
+			float data[] = {
+				1 / 9.f, 1 / 9.f, 1 / 9.f,
+				1 / 9.f, 1 / 9.f, 1 / 9.f
+				,1 / 9.f, 1 / 9.f, 1 / 9.f
+			};
+			Mat mask(3, 3, CV_32F, data);
+			Rect rect(pt, Point(x, y));
+			Mat roi = image(rect);
+			filter1(roi, blur, mask);
+			blur.convertTo(blur, CV_8U);
+			blur.copyTo(roi);
+
+			imshow(title, image);
+			pt = Point(-1, -1);
+		}
+	}
+}
 
 int main() {
 	/*Mat bgr_img = imread("./image/money.jpg", 1);
@@ -53,7 +79,7 @@ int main() {
 	createTrackbar("hue_th1", "result", &th.start, 255, onThreshold);
 	createTrackbar("hue_th2", "result", &th.end, 255, onThreshold);
 	waitKey();*/
-
+	/*
 	Mat image = imread("./image/money.jpg", IMREAD_GRAYSCALE);
 	CV_Assert(image.data);
 	float data[] = {
@@ -68,6 +94,7 @@ int main() {
 		1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f,
 		1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f
 	};
+
 	Mat mask(3, 3, CV_32F, data);
 	Mat mask2(5, 5, CV_32F, data);
 
@@ -80,6 +107,69 @@ int main() {
 	imshow("image", image);
 	imshow("blur", blur);
 	imshow("blur2", blur2);
+	waitKey(0);
+	*//*
+	return 0;
+}*/
+
+#include <opencv2/opencv.hpp>
+#include <cstdlib>
+#include <time.h>
+using namespace std;
+using namespace cv;
+
+string title = "blure";
+
+Mat image;
+void filter1(Mat img, Mat& dst, Mat mask) {
+	dst = Mat(img.size(), CV_32F, Scalar(0));
+	Point h_m = mask.size() / 2;
+
+	for (int i = h_m.y; i < img.rows - h_m.y; i++) {
+		for (int j = h_m.x; j < img.cols - h_m.x; j++) {
+
+			float sum = 0;
+			for (int u = 0; u < mask.rows; u++) {
+				for (int v = 0; v < mask.cols; v++) {
+					int y = i + u - h_m.y;
+					int x = j + v - h_m.x;
+					sum += mask.at<float>(u, v)*img.at<uchar>(y, x);
+				}
+			}
+			dst.at<float>(i, j) = sum;
+		}
+	}
+}
+void onMouse(int event, int x, int y, int flags, void*param) {
+	static Point pt(-1, -1);
+	if (event == EVENT_LBUTTONDOWN) {
+
+		if (pt.x < 0)pt = Point(x, y);
+		else {
+			Mat blur;
+			cout << "blurring" << endl;
+			float data[] = {
+				1 / 9.f,1 / 9.f,1 / 9.f,
+				1 / 9.f,1 / 9.f,1 / 9.f,
+				1 / 9.f,1 / 9.f,1 / 9.f
+			};
+			Mat mask(3, 3, CV_32F, data);
+			Rect rect(pt, Point(x, y));
+			Mat roi = image(rect);
+			filter1(roi, blur, mask);
+			blur.convertTo(blur, CV_8U);
+			blur.copyTo(roi);
+			imshow(title, image);
+			pt = Point(-1, -1);
+		}
+	}
+}
+int main() {
+	image = imread("./image/cat1.jpg", IMREAD_GRAYSCALE);
+	CV_Assert(image.data);
+	imshow("image", image);
+	imshow(title, image);
+	setMouseCallback(title, onMouse, 0);
 	waitKey(0);
 	return 0;
 }
