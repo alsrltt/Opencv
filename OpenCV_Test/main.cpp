@@ -61,12 +61,25 @@ int main() {
 		1 / 9.f, 1 / 9.f, 1 / 9.f
 		, 1 / 9.f, 1 / 9.f, 1 / 9.f
 	};
+	float data2[] = {
+		1/25.f, 1 / 25.f, 1 / 25.f , 1 / 25.f, 1 / 25.f, 
+		1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 
+		1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f,
+		1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f,
+		1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f, 1 / 25.f
+	};
 	Mat mask(3, 3, CV_32F, data);
+	Mat mask2(5, 5, CV_32F, data);
+
 	Mat blur;
+	Mat blur2;
 	filter1(image, blur, mask);
+	filter1(image, blur2, mask);
 	blur.convertTo(blur, CV_8U);
+	blur.convertTo(blur2, CV_8U);
 	imshow("image", image);
 	imshow("blur", blur);
+	imshow("blur2", blur2);
 	waitKey(0);
 	return 0;
 }
