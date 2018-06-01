@@ -477,6 +477,7 @@ int main() {
 	waitKey(0);
 }
 */
+/* //canny
 #include <opencv2/opencv.hpp>
 #include <cstdlib>
 #include <time.h>
@@ -499,4 +500,231 @@ int main() {
 	namedWindow("edge", 1);
 	createTrackbar("canny th", "edge", &th, 255, onTrackbar);
 	waitKey(0);
+}*/
+/*
+#include <opencv2/opencv.hpp> 
+#include <cstdlib>
+#include <time.h>
+using namespace std;
+using namespace cv;
+
+void scaling(Mat img, Mat& dst, Size size) {
+	dst = Mat(size, img.type(), Scalar(0));
+	double ry = (double)size.height / img.rows;
+	double rx = (double)size.width / img.cols;
+
+	for (int i = 0;i < img.rows;i++) {
+		for (int j = 0;j < img.cols;j++) {
+			int x = (int)(j*rx);
+			int y = (int)(i*ry);
+			dst.at<uchar>(y, x) = img.at<uchar>(i, j);
+		}
+	}
+}
+
+void scaling_nearest(Mat img, Mat& dst, Size size) {
+	dst = Mat(size, img.type(), Scalar(0));
+	double ry = (double)size.height / img.rows;
+	double rx = (double)size.width / img.cols;
+
+	for (int i = 0;i < dst.rows;i++) {
+		for (int j = 0;j < dst.cols;j++) {
+			int x = (int)cvRound(j/rx);
+			int y = (int)cvRound(i/ry);
+			dst.at<uchar>(i, j) = img.at<uchar>(y, x);
+		}
+	}
+}
+
+bool check_match(Mat img, Point start, Mat mask, int mode = 0) { 
+	for (int u = 0; u < mask.rows; u++) {
+		for (int v = 0; v < mask.cols; v++) {
+			Point pt(v, u);
+			int m = mask.at<uchar>(pt);
+			int p = img.at<uchar>(start + pt);
+			bool ch = (p == 255);
+			if (m == 1 && ch == mode)
+				return false;
+		}
+	}
+	return true;
+}
+void erosion(Mat img, Mat& dst, Mat mask) {
+	dst = Mat(img.size(), CV_8U, Scalar(0));
+	if (mask.empty())mask = Mat(3, 3, CV_8UC1, Scalar(1));
+	Point h_m = mask.size() / 2;
+	for (int i = h_m.y; i < img.rows - h_m.y; i++) {
+		for (int j = h_m.x; j < img.cols - h_m.x; j++) {
+			Point start = Point(j, i) - h_m;
+			bool check = check_match(img, start, mask, 0);
+			dst.at<uchar>(i, j) = (check) ? 255 : 0;
+
+		}
+
+	}
+}
+void dilation(Mat img, Mat& dst, Mat mask) {
+	dst = Mat(img.size(), CV_8U, Scalar(0));
+	if (mask.empty())mask = Mat(3, 3, CV_8UC1, Scalar(0));
+	Point h_m = mask.size() / 2;
+	for (int i = h_m.y; i < img.rows - h_m.y; i++) {
+		for (int j = h_m.x; j < img.cols - h_m.x; j++) {
+			Point start = Point(j, i) - h_m;
+			bool check = check_match(img, start, mask, 1);
+			dst.at<uchar>(i, j) = (check) ? 0 : 255;
+
+		}
+
+	}
+}
+void opening(Mat img, Mat&dst, Mat mask) {
+	Mat tmp;
+	erosion(img, tmp, mask);
+	dilation(tmp, dst, mask);
+
+}
+void closing(Mat img, Mat&dst, Mat mask) {
+	Mat tmp;
+	dilation(img, tmp, mask);
+	erosion(tmp, dst, mask);
+
+}
+int main() {
+	Mat image = imread("./image/pep.jpg", 0);
+	CV_Assert(image.data);
+	Mat dst1, dst2;
+	scaling_nearest(image, dst1, Size(200, 200));
+	scaling_nearest(image, dst2, Size(600, 600));
+	imshow("image", image);
+	imshow("dst1", dst1);
+	imshow("dst2", dst2);
+	resizeWindow("dst1", 200, 600);
+	waitKey(0);
+	return 0;
+}
+*/
+/*
+#include <opencv2/opencv.hpp>
+#include <cstdlib>
+#include <time.h>
+using namespace std;
+using namespace cv;
+
+void translation(Mat img, Mat& dst, Point pt) {
+	Rect rect(Point(0, 0), img.size());
+	dst = Mat(img.size(), img.type(), Scalar(0));
+	for (int i = 0;i < dst.rows;i++) {
+		for (int j = 0;j < dst.cols;j++) {
+			Point dst_pt(j, i);
+			Point img_pt = dst_pt - pt;
+			if (rect.contains(img_pt))
+				dst.at<uchar>(dst_pt) = img.at<uchar>(img_pt);
+		}
+	}
+}
+
+void scaling(Mat img, Mat& dst, Size size) {
+	dst = Mat(size, img.type(), Scalar(0));
+	double ratioY = (double)size.height / img.rows;
+	double ratioX = (double)size.width / img.cols;
+
+	for (int i = 0; i < img.rows; i++) {
+		for (int j = 0; j < img.cols; j++) {
+			int x = (int)(j*ratioX);
+			int y = (int)(i*ratioY);
+			dst.at<uchar>(y, x) = img.at<uchar>(i, j);
+		}
+	}
+}
+void scaling_nearest(Mat img, Mat& dst, Size size) {
+	dst = Mat(size, CV_8U, Scalar(0));
+	double ratioY = (double)size.height / img.rows;
+	double ratioX = (double)size.width / img.cols;
+	for (int i = 0; i < dst.rows; i++) {
+		for (int j = 0; j < dst.cols; j++) {
+			int x = (int)cvRound(j / ratioX);
+			int y = (int)cvRound(i / ratioY);
+			dst.at<uchar>(i, j) = img.at<uchar>(y, x);
+		}
+	}
+}
+uchar bilinear_value(Mat img, double x, double y) {
+	if (x >= img.cols - 1)x--;
+	if (y >= img.rows - 1)y--;
+
+	Point pt((int)x, (int)y);
+	int A = img.at<uchar>(pt);            // 좌측상단점
+	int B = img.at<uchar>(pt + Point(0, 1)); //좌측하단점
+	int C = img.at<uchar>(pt + Point(1, 0));  //우측상단점
+	int D = img.at<uchar>(pt + Point(1, 1));  //우측하단점
+
+	double alpha = y - pt.y;
+	double beta = x - pt.x;
+	int M1 = A + (int)cvRound(alpha*(B - A));
+	int M2 = C + (int)cvRound(alpha*(D - C));
+	int P = M1 + (int)cvRound(beta*(M2 - M1));
+	return saturate_cast<uchar>(P);
+}
+void scaling_bilinear(Mat img, Mat& dst, Size size) {
+	dst = Mat(size, CV_8U, Scalar(0));
+	double ratioY = (double)size.height / img.rows;
+	double ratioX = (double)size.width / img.cols;
+	for (int i = 0; i < dst.rows; i++) {
+		for (int j = 0; j < dst.cols; j++) {
+			double y = (i / ratioY);
+			double x = (j / ratioX);
+			dst.at<uchar>(i, j) = bilinear_value(img, x, y);
+		}
+	}
+}
+
+
+int main() {
+	Mat image = imread("./image/pep.jpg", 0);
+	CV_Assert(image.data);
+	Mat dst1, dst2;
+	translation(image, dst1, Point(30, 80));
+	translation(image, dst2, Point(-80, -50));
+	imshow("image", image);
+	imshow("dst1", dst1);
+	imshow("dst2", dst2);
+	
+	waitKey(0);
+	return 0;
+}
+*/
+#include <opencv2/opencv.hpp>
+using namespace std;
+using namespace cv;
+void put_string(Mat &frame, string text, Point pt,
+	int value) {
+	text += to_string(value);
+	int font = FONT_HERSHEY_SIMPLEX;
+	putText(frame, text, pt, font, 1, Scalar(120, 200, 90),
+		2);
+}
+int main() {
+	VideoCapture capture(0);
+	if (!capture.isOpened()) {
+		cout << "카메라가 연결되지 않음." << endl;
+		exit(1);
+	}//카메라 연결 예외처리
+	cout << "너비" << capture.get(CAP_PROP_FRAME_WIDTH) << endl;
+	cout << "높이" << capture.get(CAP_PROP_FRAME_HEIGHT) << endl;
+	cout << "노출" << capture.get(CAP_PROP_EXPOSURE) << endl;
+	cout << "밝기" << capture.get(CAP_PROP_BRIGHTNESS) << endl;
+	capture.set(CAP_PROP_FRAME_WIDTH, 400);
+	capture.set(CAP_PROP_FRAME_HEIGHT, 300);
+	for (;;) {
+		Mat frame;
+		capture.read(frame);
+		put_string(frame, "EXPOS =",
+			Point(10, 40),
+			capture.get(CAP_PROP_EXPOSURE));
+
+		frame = Scalar(255, 255, 255) - frame;
+		imshow("카메라영상", frame);
+		if (waitKey(30) >= 0)break;
+	}
+	return 0;
 }
