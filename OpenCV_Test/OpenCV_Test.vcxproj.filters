@@ -22,4 +22,12 @@
   <ItemGroup>
     <Xml Include="test.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\opencv-3.4\sources\data\haarcascades\preprocess.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="preprocess.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

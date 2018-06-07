@@ -130,6 +130,10 @@
   <ItemGroup>
     <Xml Include="test.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\opencv-3.4\sources\data\haarcascades\preprocess.hpp" />
+    <ClInclude Include="preprocess.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
