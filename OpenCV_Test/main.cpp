@@ -4,44 +4,46 @@
 #include <time.h>
 using namespace std;
 using namespace cv;
-Mat image = imread("./image/pep.jpg", 0);
-Mat dst1;
-void translation(Mat img, Mat& dst, Point pt) {
-	Rect rect(Point(0, 0), img.size());
-	dst = Mat(img.size(), img.type(), Scalar(0));
-	for (int i = 0; i < dst.rows; i++) {
-		for (int j = 0; j < dst.cols; j++) {
-			Point dst_pt(j, i);
-			Point img_pt = dst_pt - pt;
-			if (rect.contains(img_pt))
-				dst.at<uchar>(dst_pt) = img.at<uchar>(img_pt);
-		}
-	}
-}
-static Point pt(-1, -1);
-static Point pt1(-1, -1);
-static Point pt2(0, 0);
-void onMouse(int event, int x, int y, int flags, void *userdata) {
-	switch (event) {
-	case EVENT_LBUTTONDOWN:
-		if (pt.x < 0) {
-			pt = Point(x, y);
-		}
-		else {
-			pt1 = Point(x, y);
-			pt2 = Point(pt.x - pt1.x, pt.y - pt1.y);
-			translation(image, dst1, pt2);
-			imshow("dst1", dst1);
-			pt = Point(-1, -1);
-		}
 
+void draw_houghLines(Mat src, Mat &dst, vector<Vec2f> lines, int nline) {
+	cvtColor(src, dst, CV_GRAY2BGR);
+	for (size_t i = 0; i < min((int)lines.size(), nline); i++) {
+		float rho = lines[i][0], theta = lines[i][1];
+		double a = cos(theta), b = sin(theta);
+		Point2d pt(a*rho, b*rho);
+		Point2d delta(1000 * -b, 1000 * a);
+		line(dst, pt + delta, pt - delta, Scalar(0, 255, 0), 1, LINE_AA);
 	}
 }
+
 int main() {
-	CV_Assert(image.data);
+	VideoCapture capture("./image/vedio1.avi");
+	if (!capture.isOpened()) {
+		exit(1);
+	}
 
-	imshow("image", image);
-	setMouseCallback("image", onMouse, 0);
-	waitKey();
+	double rho = 1, theta = CV_PI / 180;
+	Mat frame;
+	Mat canny, edge, dst1;
+	double fps = 29.97;
+	Size size;
+	int fourcc = VideoWriter::fourcc('D', 'X', '5', '0');
+	capture.read(frame);
+	VideoWriter writer;
+	writer.open("./image/vedio.avi", fourcc, fps, frame.size());
+	CV_Assert(writer.isOpened());
+	while (capture.read(frame)) {
+		CV_Assert(frame.data);
+		GaussianBlur(frame, canny, Size(5, 5), 1, 1);
+		Canny(canny, edge, 100, 150);
+		vector<Vec2f> lines;
+		HoughLines(edge, lines, rho, theta, 130);
+		draw_houghLines(edge, dst1, lines, 10);
+
+		imshow("frame", frame);
+		imshow("hough", dst1);
+		writer << dst1;
+		if (waitKey(30) >= 0) break;
+	}
 	return 0;
 }
